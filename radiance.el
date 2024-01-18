@@ -118,13 +118,13 @@ You can re-bind the commands to any keys you prefer.")
               (push ov radiance-overlays))
           (when (< (point) end)
             (forward-char 1))))
-      (setq radiance-overlays (reverse radiance-overlays))
-      (if-let (cand (alist-get face radiance-overlays-alist))
-          (setf (cddr cand) (append (cddr cand) radiance-overlays))
-        (add-to-list
-         'radiance-overlays-alist
-         (cons face (cons reg radiance-overlays))
-         t)))))
+      (when (setq radiance-overlays (reverse radiance-overlays))
+        (if-let (cand (alist-get face radiance-overlays-alist))
+            (setf (cddr cand) (append (cddr cand) radiance-overlays))
+          (add-to-list
+           'radiance-overlays-alist
+           (cons face (cons reg radiance-overlays))
+           t))))))
 
 (defun radiance-collect (reg)
   "Highlight all matching parts for REG."
