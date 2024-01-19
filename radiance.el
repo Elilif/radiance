@@ -70,10 +70,10 @@
 (defvar radiance-map
   (let ((map (make-sparse-keymap)))
     (keymap-set map "s-\\" #'radiance-start)
-    (keymap-set map "s-s" #'radiance-swap-symbols)
+    (keymap-set map "s-s" #'radiance-swap-object)
     (keymap-set map "s-x" #'radiance-exit)
-    (keymap-set map "s-n" #'radiance-next-symbol)
-    (keymap-set map "s-p" #'radiance-previous-symbol)
+    (keymap-set map "s-n" #'radiance-next-object)
+    (keymap-set map "s-p" #'radiance-previous-object)
     (keymap-set map "s-m" #'radiance-unmark)
     map)
   "Keymap automatically activated inside overlays.
@@ -316,7 +316,7 @@ delete `radiance-overlays' only otherwise."
     map))
 
 ;;;###autoload
-(defun radiance-swap-symbols ()
+(defun radiance-swap-object ()
   "Swap objects."
   (interactive)
   (unless (length= radiance-overlays-alist 2)
@@ -334,6 +334,7 @@ delete `radiance-overlays' only otherwise."
     (cl-rotatef (cadr (nth 0 radiance-overlays-alist))
                 (cadr (nth 1 radiance-overlays-alist)))))
 
+;;;###autoload
 (defun radiance-unmark ()
   "Remove all highlights of symbol at point."
   (interactive)
@@ -344,7 +345,8 @@ delete `radiance-overlays' only otherwise."
       (delete-overlay ov))
     (setf (alist-get face radiance-overlays-alist nil t) nil)))
 
-(defun radiance-next-symbol ()
+;;;###autoload
+(defun radiance-next-object ()
   "Jump to the next location of symbol at point."
   (interactive)
   (let* ((result (radiance--symbol-position))
@@ -354,7 +356,8 @@ delete `radiance-overlays' only otherwise."
     (goto-char (overlay-start (nth index ovs)))
     (message "Current overlay: %s/%s" (1+ index) (length ovs))))
 
-(defun radiance-previous-symbol ()
+;;;###autoload
+(defun radiance-previous-object ()
   "Jump to the previous location of symbol at point."
   (interactive)
   (let* ((result (radiance--symbol-position))
