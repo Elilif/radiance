@@ -1,5 +1,5 @@
 * Radiance(WIP)
-Radiance combines kmacro and overlays to make multiple-cursor editing more fluent.
+Operations on target object will affect all same objects.
 
 *NOTE : This package is still a work in progress, some breaking changes may occur.*
 * Usage
@@ -7,17 +7,38 @@ All commands in this package can be used alone, in which case the matching scope
 is the current buffer. When you use =radiance-mark-region= to set several regions,
 then the matching scope is marked regions.
 
-| Commands              | Description                                                           |
-|-----------------------+-----------------------------------------------------------------------|
-| =radiance-mark-region=  | Mark selected regions.                                                |
-| =radiance-mark-strings= | Mark all same strings in the current buffer.                          |
-| =radiance-mark-symbols= | Mark all symbols the same as the one under the current cursor.        |
-| =radiance-mark-lines=   | Mark all lines.                                                       |
-| =radiance-exit=         | Quit out of recording the macro or delete overlays.                   |
-| =radiance-finish=       | Finish defining a keyboard macro and apply the macro to all overlays. |
+| Commands                 | Description                                                           |
+|--------------------------+-----------------------------------------------------------------------|
+| =radiance-mark-region=     | Mark selected regions.                                                |
+| =radiance-mark-strings=    | Mark all same strings in the current buffer.                          |
+| =radiance-mark-symbols=    | Mark all symbols the same as the one under the current cursor.        |
+| =radiance-mark-lines=      | Mark all lines.                                                       |
+| =radiance-delete-overlays= | Delete radiance marked overlays                                       |
+| =radiance-start=           | Record subsequent keyboard input, defining a keyboard macro.          |
+| =radiance-exit=            | Quit out of recording the macro or delete overlays.                   |
+| =radiance-finish=          | Finish defining a keyboard macro and apply the macro to all overlays. |
+
+Default key-bindings defined in =radiance-macro-mode-map=:
+| keybinding | Command                    |
+|------------+----------------------------|
+| =C-a=        | =radiance-beginning-of-line= |
+| =C-e=        | =radiance-end-of-line=       |
+| =C-g=        | =radiance-exit=              |
+| =s-`=        | =radiance-finish=            |
+
+Default key-bindings defined in =radiance-map=:
+| keybinding | Command                  |
+|------------+--------------------------|
+| =s-\=        | =radiance-start=           |
+| =s-m=        | =radiance-unmark=          |
+| =s-n=        | =radiance-next-object=     |
+| =s-p=        | =radiance-previous-object= |
+| =s-s=        | =radiance-swap-object=     |
+
 * Similar projects
 - [[https://github.com/magnars/multiple-cursors.el][GitHub - magnars/multiple-cursors.el: Multiple cursors for emacs.]]
 - [[https://github.com/corytertel/macrursors][GitHub - corytertel/macrursors: An extremely fast and minimal alternative to multiple-cursors.el.]]
 - [[https://github.com/manateelazycat/markmacro][GitHub - manateelazycat/markmacro: Keyboard macro for marked regions]]
+- [[https://github.com/wolray/symbol-overlay][GitHub - wolray/symbol-overlay: Highlight symbols with keymap-enabled overlays]]
 
   
