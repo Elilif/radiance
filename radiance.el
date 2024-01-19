@@ -88,8 +88,8 @@ You can re-bind the commands to any keys you prefer.")
    :from-end t))
 
 (defun radiance--get-all-ovs ()
-  (let* ((current-overlay (radiance--get-current-mark-ov))
-         (face (overlay-get current-overlay 'face)))
+  (when-let* ((current-overlay (radiance--get-current-mark-ov))
+              (face (overlay-get current-overlay 'face)))
     (assoc face radiance-overlays-alist)))
 
 (defun radiance--set-current-ov ()
@@ -258,7 +258,7 @@ This command is applicable to both normal regions and
   (interactive "P")
   (end-kbd-macro)
   (save-excursion
-    (let ((current-overlay (radiance--get-current-mark-ov)))
+    (when-let ((current-overlay (radiance--get-current-mark-ov)))
       (if arg
           (dolist (radiance-overlays radiance-overlays-alist)
             (dolist (ov (cddr radiance-overlays))
