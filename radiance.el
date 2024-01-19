@@ -71,7 +71,6 @@
   (let ((map (make-sparse-keymap)))
     (keymap-set map "s-\\" #'radiance-start)
     (keymap-set map "s-s" #'radiance-swap-object)
-    (keymap-set map "s-x" #'radiance-exit)
     (keymap-set map "s-n" #'radiance-next-object)
     (keymap-set map "s-p" #'radiance-previous-object)
     (keymap-set map "s-m" #'radiance-unmark)
