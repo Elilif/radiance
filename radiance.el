@@ -123,7 +123,7 @@ You can re-bind the commands to any keys you prefer.")
         (last-ov (car (last (cddr (car (last radiance-overlays-alist)))))))
     (setq radiance-current-overlay (or ov-at-point last-ov))))
 
-(defun radiance--collect-in-region (beg end reg)
+(defun radiance--collect-in-region (beg end reg prefix suffix)
   "Highlight all matching objects for REG between BEG and END."
   (save-excursion
     (goto-char beg)
@@ -136,7 +136,8 @@ You can re-bind the commands to any keys you prefer.")
                     (radiance--make-face)))
           radiance-overlays)
       (while (and (not (eobp))
-                  (re-search-forward (regexp-quote reg) end t))
+                  (re-search-forward
+                   (concat prefix (regexp-quote reg) suffix) end t))
         (when (not (radiance--get-current-mark-ov))
           (if-let* ((mbeg (match-beginning 0))
                     (mend (match-end 0))
@@ -157,7 +158,7 @@ You can re-bind the commands to any keys you prefer.")
            (cons face (cons reg radiance-overlays))
            t))))))
 
-(defun radiance-collect (reg)
+(cl-defun radiance-collect (reg &optional (prefix "") (suffix ""))
   "Highlight all matching parts for REG."
   (cond
    ((and radiance-regions
@@ -168,9 +169,9 @@ You can re-bind the commands to any keys you prefer.")
         (save-excursion
           (save-restriction
             (narrow-to-region beg end)
-            (radiance--collect-in-region beg end reg))))))
+            (radiance--collect-in-region beg end reg prefix suffix))))))
    (t
-    (radiance--collect-in-region (point-min) (point-max) reg))))
+    (radiance--collect-in-region (point-min) (point-max) reg prefix suffix))))
 
 (defmacro radiance--perform (&rest body)
   (declare (indent defun))
@@ -214,7 +215,7 @@ only."
   (interactive (list (or (thing-at-point 'symbol)
                          (error "No symbol at point!"))))
   (radiance--perform
-    (radiance-collect (format "\\_<%s\\_>" symbol))))
+    (radiance-collect symbol "\\_<" "\\_>")))
 
 ;;;###autoload
 (defun radiance-mark-lines ()
@@ -333,9 +334,7 @@ This command is applicable to both normal regions and
   (save-excursion
     (dotimes (i 2)
       (let ((cand (nth i radiance-overlays-alist))
-            (new (string-trim
-                  (cadr (nth (- 1 i) radiance-overlays-alist))
-                  "\\\\_<" "\\\\_>")))
+            (new (cadr (nth (- 1 i) radiance-overlays-alist))))
         (dolist (ov (cddr cand))
           (goto-char (overlay-start ov))
           (when (re-search-forward (regexp-quote (cadr cand)) (overlay-end ov) t)
