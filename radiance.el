@@ -16,33 +16,35 @@
 (require 'rect)
 (require 'cl-lib)
 
+;;;; customizations
+
 (defgroup radiance nil
-  "Keyboard macro for marked objects."
+  "Operations on target object will affect all same objects."
   :group 'radiance)
 
 (defface radiance-mark-face-1
   '((t (:background "pink")))
-  "Face for marked symbols."
+  "Face for marked objects."
   :group 'radiance)
 
 (defface radiance-mark-face-2
   '((t (:background "orange")))
-  "Face for marked symbols."
+  "Face for marked objects."
   :group 'radiance)
 
 (defface radiance-mark-face-3
   '((t (:background "tan")))
-  "Face for marked symbols."
+  "Face for marked objects."
   :group 'radiance)
 
 (defface radiance-mark-face-4
   '((t (:background "yellow green")))
-  "Face for marked symbols."
+  "Face for marked objects."
   :group 'radiance)
 
 (defface radiance-mark-face-5
   '((t (:background "purple")))
-  "Face for marked symbols."
+  "Face for marked objects."
   :group 'radiance)
 
 (defface radiance-region-face
@@ -55,14 +57,13 @@
                                  radiance-mark-face-3
                                  radiance-mark-face-4
                                  radiance-mark-face-5)
-  "Faces for marked symbols."
+  "Faces for marked objects."
   :type '(repeat face)
   :group 'radiance)
 
 ;;;; utilities
 
-(defvar-local radiance-overlays-alist nil
-  "list of (CANDID FACE . OVERLAYS).")
+(defvar-local radiance-overlays-alist nil)
 (defvar-local radiance-regions nil)
 (defvar-local radiance-current-overlay nil)
 
@@ -79,6 +80,7 @@
 You can re-bind the commands to any keys you prefer.")
 
 (defun radiance--get-current-mark-ov ()
+  "Return the first radiance overlay under point."
   (cl-find-if
    (lambda (ov)
      (memq (overlay-get ov 'face)
@@ -86,14 +88,18 @@ You can re-bind the commands to any keys you prefer.")
    (overlays-in (1- (point)) (1+ (point)))
    :from-end t))
 
+(defun radiance--get-all-ovs ()
+  (let* ((current-overlay (radiance--get-current-mark-ov))
+         (face (overlay-get current-overlay 'face)))
+    (assoc face radiance-overlays-alist)))
+
 (defun radiance--set-current-ov ()
-  "Move the point to the beginning of the overlay."
   (let ((ov-at-point (radiance--get-current-mark-ov))
         (last-ov (car (last (cddr (car (last radiance-overlays-alist)))))))
     (setq radiance-current-overlay (or ov-at-point last-ov))))
 
 (defun radiance--collect-in-region (beg end reg)
-  "Highlight all matching parts for REG between BEG and END."
+  "Highlight all matching objects for REG between BEG and END."
   (save-excursion
     (goto-char beg)
     (let ((face (or (car (cl-find-if (lambda (cand)
@@ -101,8 +107,7 @@ You can re-bind the commands to any keys you prefer.")
                                      radiance-overlays-alist))
                     (car (cl-set-difference
                           radiance-mark-faces
-                          (mapcar #'car radiance-overlays-alist)))
-                    (car radiance-mark-faces)))
+                          (mapcar #'car radiance-overlays-alist)))))
           radiance-overlays)
       (while (and (not (eobp))
                   (re-search-forward reg end t)
@@ -152,6 +157,23 @@ You can re-bind the commands to any keys you prefer.")
      (let ((length (length (cdr (radiance--symbol-position)))))
        (message "There are %s overlays." length))))
 
+(defun radiance-delete-overlays (arg)
+  "With ARG, delete radiance marked overlays and `radiance-regions',
+delete radiance marked overlays only otherwise."
+  (when radiance-overlays-alist
+    (dolist (radiance-overlays radiance-overlays-alist)
+      (dolist (overlay (cddr radiance-overlays))
+        (delete-overlay overlay)))
+    (setq radiance-overlays-alist nil))
+  (when (and arg radiance-regions)
+    (dolist (overlay radiance-regions)
+      (delete-overlay overlay))
+    (setq radiance-regions nil)))
+
+(defun radiance--symbol-position ()
+  (let* ((ovs (cddr (radiance--get-all-ovs))))
+    (cons (seq-position ovs (radiance--get-current-mark-ov)) ovs)))
+
 ;;;; interactive functions
 
 ;;;###autoload
@@ -168,20 +190,7 @@ use the word at point."
                       (t (or (thing-at-point 'word)
                              (error "No word at point!"))))))
   (radiance--perform
-    (radiance-collect string)))
-
-(defun radiance-delete-overlays (arg)
-  "With ARG, delete radiance marked overlays and `radiance-regions',
-delete radiance marked overlays only otherwise."
-  (when radiance-overlays-alist
-    (dolist (radiance-overlays radiance-overlays-alist)
-      (dolist (overlay (cddr radiance-overlays))
-        (delete-overlay overlay)))
-    (setq radiance-overlays-alist nil))
-  (when (and arg radiance-regions)
-    (dolist (overlay radiance-regions)
-      (delete-overlay overlay))
-    (setq radiance-regions nil)))
+    (radiance-collect (regexp-quote string))))
 
 ;;;###autoload
 (defun radiance-mark-symbols (symbol)
@@ -192,7 +201,7 @@ only."
   (interactive (list (or (thing-at-point 'symbol)
                          (error "No symbol at point!"))))
   (radiance--perform
-    (radiance-collect (format "\\_<%s\\_>" symbol))))
+    (radiance-collect (format "\\_<%s\\_>" (regexp-quote symbol)))))
 
 ;;;###autoload
 (defun radiance-mark-lines ()
@@ -267,19 +276,18 @@ delete `radiance-overlays' only otherwise."
   (interactive "P")
   (end-kbd-macro)
   (save-excursion
-    (let ((current-overlay (radiance--get-current-mark-ov)))
-      (if arg
+    (if arg
+        (let ((current-overlay (radiance--get-current-mark-ov)))
           (dolist (radiance-overlays radiance-overlays-alist)
             (dolist (ov (cddr radiance-overlays))
               (unless (eq ov current-overlay)
                 (goto-char (overlay-start ov))
-                (call-last-kbd-macro))))
-        (let* ((face (overlay-get current-overlay 'face))
-               (ovs (cdr (alist-get face radiance-overlays-alist))))
-          (dolist (ov ovs)
-            (unless (eq ov current-overlay)
-              (goto-char (overlay-start ov))
-              (call-last-kbd-macro)))))))
+                (call-last-kbd-macro)))))
+      (let* ((ovs (cddr (radiance--get-all-ovs))))
+        (dolist (ov ovs)
+          (unless (eq ov current-overlay)
+            (goto-char (overlay-start ov))
+            (call-last-kbd-macro))))))
   (radiance-macro-mode -1))
 
 ;;;###autoload
@@ -309,7 +317,7 @@ delete `radiance-overlays' only otherwise."
 
 ;;;###autoload
 (defun radiance-swap-symbols ()
-  "Swap symbols."
+  "Swap objects."
   (interactive)
   (unless (length= radiance-overlays-alist 2)
     (user-error "Can only swap two symbols!"))
@@ -326,18 +334,12 @@ delete `radiance-overlays' only otherwise."
     (cl-rotatef (cadr (nth 0 radiance-overlays-alist))
                 (cadr (nth 1 radiance-overlays-alist)))))
 
-(defun radiance--symbol-position ()
-  (let* ((current-overlay (radiance--get-current-mark-ov))
-         (face (overlay-get current-overlay 'face))
-         (ovs (cdr (alist-get face radiance-overlays-alist))))
-    (cons (seq-position ovs current-overlay) ovs)))
-
 (defun radiance-unmark ()
   "Remove all highlights of symbol at point."
   (interactive)
-  (let* ((current-overlay (radiance--get-current-mark-ov))
-         (face (overlay-get current-overlay 'face))
-         (ovs (cdr (alist-get face radiance-overlays-alist))))
+  (let* ((cand (radiance--get-all-ovs))
+         (face (car cand))
+         (ovs (cddr cand)))
     (dolist (ov ovs)
       (delete-overlay ov))
     (setf (alist-get face radiance-overlays-alist nil t) nil)))
