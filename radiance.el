@@ -23,42 +23,40 @@
   :group 'radiance)
 
 (defface radiance-mark-face-1
-  '((t (:background "pink")))
+  '((t (:background "pink" :foreground "black")))
   "Face for marked objects."
   :group 'radiance)
 
 (defface radiance-mark-face-2
-  '((t (:background "orange")))
+  '((t (:background "orange" :foreground "black")))
   "Face for marked objects."
   :group 'radiance)
 
 (defface radiance-mark-face-3
-  '((t (:background "tan")))
+  '((t (:background "tan" :foreground "black")))
   "Face for marked objects."
   :group 'radiance)
 
 (defface radiance-mark-face-4
-  '((t (:background "yellow green")))
+  '((t (:background "yellow green" :foreground "black")))
   "Face for marked objects."
   :group 'radiance)
 
 (defface radiance-mark-face-5
-  '((t (:background "purple")))
+  '((t (:background "aquamarine" :foreground "black")))
   "Face for marked objects."
   :group 'radiance)
 
 (defface radiance-region-face
-  '((t (:background "lightblue")))
+  '((t (:background "lightblue" :foreground "black")))
   "Face for marked regions."
   :group 'radiance)
 
-(defcustom radiance-mark-faces '(radiance-mark-face-1
-                                 radiance-mark-face-2
-                                 radiance-mark-face-3
-                                 radiance-mark-face-4
-                                 radiance-mark-face-5)
-  "Faces for marked objects."
-  :type '(repeat face)
+(defcustom radiance-color-distance 10000
+  "The minimal color distacne required by generating new color.
+
+See `color-distance' and `radiance--make-face' for details."
+  :type 'integer
   :group 'radiance)
 
 ;;;; utilities
@@ -77,6 +75,34 @@
     map)
   "Keymap automatically activated inside overlays.
 You can re-bind the commands to any keys you prefer.")
+
+(defvar radiance-mark-faces '(radiance-mark-face-1
+                              radiance-mark-face-2
+                              radiance-mark-face-3
+                              radiance-mark-face-4
+                              radiance-mark-face-5)
+  "Faces for marked objects.")
+
+(defun radiance--make-face ()
+  (if-let* ((bg (cl-find-if
+                 (lambda (color)
+                   (cl-every
+                    (lambda (face)
+                      (and
+                       (> (color-distance color "Black")
+                          200000)
+                       (> (color-distance color (face-background 'default))
+                          100000)
+                       (> (color-distance color (face-background face))
+                          radiance-color-distance)))
+                    radiance-mark-faces))
+                 (defined-colors)))
+            (new-face (make-face (intern (concat "radiance-mark-face-"  bg)))))
+      (progn
+        (set-face-attribute new-face nil :background bg :foreground "Black")
+        (add-to-list 'radiance-mark-faces new-face t)
+        new-face)
+    (user-error "No available faces!")))
 
 (defun radiance--get-current-mark-ov ()
   "Return the first radiance overlay under point."
@@ -106,7 +132,8 @@ You can re-bind the commands to any keys you prefer.")
                                      radiance-overlays-alist))
                     (car (cl-set-difference
                           radiance-mark-faces
-                          (mapcar #'car radiance-overlays-alist)))))
+                          (mapcar #'car radiance-overlays-alist)))
+                    (radiance--make-face)))
           radiance-overlays)
       (while (and (not (eobp))
                   (re-search-forward reg end t))
