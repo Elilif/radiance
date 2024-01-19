@@ -1,5 +1,7 @@
-* Radiance
+* Radiance(WIP)
 Radiance combines kmacro and overlays to make multiple-cursor editing more fluent.
+
+*NOTE : This package is still a work in progress, some breaking changes may occur.*
 * Usage
 All commands in this package can be used alone, in which case the matching scope
 is the current buffer. When you use =radiance-mark-region= to set several regions,
