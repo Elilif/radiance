@@ -157,19 +157,6 @@ You can re-bind the commands to any keys you prefer.")
      (let ((length (length (cdr (radiance--symbol-position)))))
        (message "There are %s overlays." length))))
 
-(defun radiance-delete-overlays (arg)
-  "With ARG, delete radiance marked overlays and `radiance-regions',
-delete radiance marked overlays only otherwise."
-  (when radiance-overlays-alist
-    (dolist (radiance-overlays radiance-overlays-alist)
-      (dolist (overlay (cddr radiance-overlays))
-        (delete-overlay overlay)))
-    (setq radiance-overlays-alist nil))
-  (when (and arg radiance-regions)
-    (dolist (overlay radiance-regions)
-      (delete-overlay overlay))
-    (setq radiance-regions nil)))
-
 (defun radiance--symbol-position ()
   (let* ((ovs (cddr (radiance--get-all-ovs))))
     (cons (seq-position ovs (radiance--get-current-mark-ov)) ovs)))
@@ -251,13 +238,9 @@ This command is applicable to both normal regions and
       (kmacro-start-macro 0))))
 
 ;;;###autoload
-(defun radiance-exit (&optional arg)
-  "Quit out of recording the macro or delete overlays.
-
-With ARG, delete `radiance-overlays' and `radiance-regions',
-delete `radiance-overlays' only otherwise."
-  (interactive "P")
-  (radiance-delete-overlays arg)
+(defun radiance-exit ()
+  "Quit out of recording the macro."
+  (interactive)
   (radiance-macro-mode -1)
 
   ;; taken from `keyboard-quit'.
@@ -333,6 +316,21 @@ delete `radiance-overlays' only otherwise."
             (replace-match new)))))
     (cl-rotatef (cadr (nth 0 radiance-overlays-alist))
                 (cadr (nth 1 radiance-overlays-alist)))))
+
+;;;###autoload
+(defun radiance-delete-overlays (arg)
+  "With ARG, delete radiance marked overlays and `radiance-regions',
+delete radiance marked overlays only otherwise."
+  (interactive "P")
+  (when radiance-overlays-alist
+    (dolist (radiance-overlays radiance-overlays-alist)
+      (dolist (overlay (cddr radiance-overlays))
+        (delete-overlay overlay)))
+    (setq radiance-overlays-alist nil))
+  (when (and arg radiance-regions)
+    (dolist (overlay radiance-regions)
+      (delete-overlay overlay))
+    (setq radiance-regions nil)))
 
 ;;;###autoload
 (defun radiance-unmark ()
