@@ -276,18 +276,18 @@ delete `radiance-overlays' only otherwise."
   (interactive "P")
   (end-kbd-macro)
   (save-excursion
-    (if arg
-        (let ((current-overlay (radiance--get-current-mark-ov)))
+    (let ((current-overlay (radiance--get-current-mark-ov)))
+      (if arg
           (dolist (radiance-overlays radiance-overlays-alist)
             (dolist (ov (cddr radiance-overlays))
               (unless (eq ov current-overlay)
                 (goto-char (overlay-start ov))
-                (call-last-kbd-macro)))))
-      (let* ((ovs (cddr (radiance--get-all-ovs))))
-        (dolist (ov ovs)
-          (unless (eq ov current-overlay)
-            (goto-char (overlay-start ov))
-            (call-last-kbd-macro))))))
+                (call-last-kbd-macro))))
+        (let* ((ovs (cddr (radiance--get-all-ovs))))
+          (dolist (ov ovs)
+            (unless (eq ov current-overlay)
+              (goto-char (overlay-start ov))
+              (call-last-kbd-macro)))))))
   (radiance-macro-mode -1))
 
 ;;;###autoload
