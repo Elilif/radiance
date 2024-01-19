@@ -136,7 +136,7 @@ You can re-bind the commands to any keys you prefer.")
                     (radiance--make-face)))
           radiance-overlays)
       (while (and (not (eobp))
-                  (re-search-forward reg end t))
+                  (re-search-forward (regexp-quote reg) end t))
         (when (not (radiance--get-current-mark-ov))
           (if-let* ((mbeg (match-beginning 0))
                     (mend (match-end 0))
@@ -203,7 +203,7 @@ use the word at point."
                       (t (or (thing-at-point 'word)
                              (error "No word at point!"))))))
   (radiance--perform
-    (radiance-collect (regexp-quote string))))
+    (radiance-collect string)))
 
 ;;;###autoload
 (defun radiance-mark-symbols (symbol)
@@ -214,7 +214,7 @@ only."
   (interactive (list (or (thing-at-point 'symbol)
                          (error "No symbol at point!"))))
   (radiance--perform
-    (radiance-collect (format "\\_<%s\\_>" (regexp-quote symbol)))))
+    (radiance-collect (format "\\_<%s\\_>" symbol))))
 
 ;;;###autoload
 (defun radiance-mark-lines ()
@@ -338,7 +338,7 @@ This command is applicable to both normal regions and
                   "\\\\_<" "\\\\_>")))
         (dolist (ov (cddr cand))
           (goto-char (overlay-start ov))
-          (when (re-search-forward (cadr cand) (overlay-end ov) t)
+          (when (re-search-forward (regexp-quote (cadr cand)) (overlay-end ov) t)
             (replace-match new)))))
     (cl-rotatef (cadr (nth 0 radiance-overlays-alist))
                 (cadr (nth 1 radiance-overlays-alist)))))
