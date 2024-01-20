@@ -226,7 +226,7 @@ If there are marked regions, mark all lines in these regions
 only."
   (interactive)
   (radiance--perform
-    (radiance-collect "^.*$")))
+    (radiance-collect "" "^.*$")))
 
 ;;;###autoload
 (defun radiance-mark-region (beg end)
