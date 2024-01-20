@@ -114,7 +114,8 @@ You can re-bind the commands to any keys you prefer.")
    :from-end t))
 
 (defun radiance--get-all-ovs ()
-  (when-let* ((current-overlay (radiance--get-current-mark-ov))
+  (when-let* ((current-overlay (or (radiance--get-current-mark-ov)
+                                   radiance-current-overlay))
               (face (overlay-get current-overlay 'face)))
     (assoc face radiance-overlays-alist)))
 
@@ -258,11 +259,11 @@ This command is applicable to both normal regions and
   (interactive)
   (if (not radiance-overlays-alist)
       (message "Nothing is selected.")
-    (let ((current-overlay (radiance--get-current-mark-ov)))
-      (goto-char (overlay-start (or current-overlay
-                                    radiance-current-overlay)))
-      (radiance-macro-mode 1)
-      (kmacro-start-macro 0))))
+    (setq radiance-current-overlay (or (radiance--get-current-mark-ov)
+                                       radiance-current-overlay))
+    (goto-char (overlay-start radiance-current-overlay))
+    (radiance-macro-mode 1)
+    (kmacro-start-macro 0)))
 
 ;;;###autoload
 (defun radiance-exit ()
@@ -286,18 +287,18 @@ This command is applicable to both normal regions and
   (interactive "P")
   (end-kbd-macro)
   (save-excursion
-    (when-let ((current-overlay (radiance--get-current-mark-ov)))
-      (if arg
-          (dolist (radiance-overlays radiance-overlays-alist)
-            (dolist (ov (cddr radiance-overlays))
-              (unless (eq ov current-overlay)
-                (goto-char (overlay-start ov))
-                (call-last-kbd-macro))))
-        (let* ((ovs (cddr (radiance--get-all-ovs))))
-          (dolist (ov ovs)
-            (unless (eq ov current-overlay)
+    (if arg
+        (dolist (radiance-overlays radiance-overlays-alist)
+          (dolist (ov (cddr radiance-overlays))
+            (unless (eq ov radiance-current-overlay)
               (goto-char (overlay-start ov))
-              (call-last-kbd-macro)))))))
+              (call-last-kbd-macro))))
+      (let* ((ovs (cddr (radiance--get-all-ovs))))
+        (dolist (ov ovs)
+          (unless (eq ov radiance-current-overlay)
+            (goto-char (overlay-start ov))
+            (call-last-kbd-macro))))))
+  (goto-char (overlay-start radiance-current-overlay))
   (radiance-macro-mode -1))
 
 ;;;###autoload
