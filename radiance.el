@@ -68,7 +68,7 @@ See `color-distance' and `radiance--make-face' for details."
 (defvar radiance-map
   (let ((map (make-sparse-keymap)))
     (keymap-set map "s-\\" #'radiance-start)
-    (keymap-set map "s-s" #'radiance-swap-object)
+    (keymap-set map "s-s" #'radiance-swap-objects)
     (keymap-set map "s-n" #'radiance-next-object)
     (keymap-set map "s-p" #'radiance-previous-object)
     (keymap-set map "s-m" #'radiance-unmark)
@@ -327,11 +327,11 @@ This command is applicable to both normal regions and
     map))
 
 ;;;###autoload
-(defun radiance-swap-object ()
-  "Swap objects."
+(defun radiance-swap-objects ()
+  "Swap two objects in `radiance-overlays-alist'."
   (interactive)
   (unless (length= radiance-overlays-alist 2)
-    (user-error "Can only swap two symbols!"))
+    (user-error "Can only swap two objects!"))
   (save-excursion
     (dotimes (i 2)
       (let ((cand (nth i radiance-overlays-alist))
