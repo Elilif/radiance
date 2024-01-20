@@ -90,6 +90,9 @@ You can re-bind the commands to any keys you prefer.")
   "Faces for marked objects.")
 
 (defun radiance--make-face ()
+  "Define a new face using specific color.
+
+the color is selected from `defined-colors'."
   (if-let* ((bg (cl-find-if
                  (lambda (color)
                    (cl-every
