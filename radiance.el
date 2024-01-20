@@ -59,6 +59,12 @@ See `color-distance' and `radiance--make-face' for details."
   :type 'integer
   :group 'radiance)
 
+(defcustom radiance-delete-overlays-include-regions t
+  "If non-nil, `radiance-delete-overlays' will also delete
+`radiance-regions'."
+  :type 'boolean
+  :group 'radiance)
+
 ;;;; utilities
 
 (defvar-local radiance-overlays-alist nil)
@@ -345,15 +351,19 @@ This command is applicable to both normal regions and
 
 ;;;###autoload
 (defun radiance-delete-overlays (arg)
-  "With ARG, delete radiance marked overlays and `radiance-regions',
-delete radiance marked overlays only otherwise."
+  "Delete all overlays.
+
+With a prefix argument ARG or
+`radiance-delete-overlays-include-regions', delete all overlays
+and regions."
   (interactive "P")
   (when radiance-overlays-alist
     (dolist (radiance-overlays radiance-overlays-alist)
       (dolist (overlay (cddr radiance-overlays))
         (delete-overlay overlay)))
     (setq radiance-overlays-alist nil))
-  (when (and arg radiance-regions)
+  (when (and (or arg radiance-delete-overlays-include-regions)
+             radiance-regions)
     (dolist (overlay radiance-regions)
       (delete-overlay overlay))
     (setq radiance-regions nil)))
